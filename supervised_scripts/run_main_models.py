@@ -104,16 +104,32 @@ def predict(model, dataloader, device, model_type, mode = "test"):
             #    save_image(og_noise_x, test_i, "noise") 
             #    save_image(denoise_y, test_i, "truth") 
                
-    #Bug, where can only save activations if treated as test; can fix at some point
-    # with open("results/probe_activations/swinir/swinir_test.pkl", "wb") as f:
-    #     pickle.dump(features, f)
     return torch.mean(torch.tensor(metrics_avg))
+
+def save_activations(model, dataloader, device, split_type):
+    """
+    Save model activations prior to final layers
+    """
+    #Function requires generating model outputs
+    with torch.no_grad():
+        if model_type == "swinir":
+            model.conv_after_body.register_forward_hook(hook_fn)
+        for test_i, (og_noise_x, denoise_y) in enumerate(dataloader):
+            if model_type == "swinir":
+                    noise_x, h_old, w_old = SwinIR_format(og_noise_x)
+            else:
+                noise_x = og_noise_x
+            output = model(noise_x.to(device))
+    with open(f"results/probe_activations/swinir/{split_type}.pkl", "wb") as f:
+        pickle.dump(features, f)
+
 
     
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_type", type = str, default = "swinir")
+    parser.add_argument("--extract_activations", type = lambda x: x.lower() == "true", default = False)
     parser.add_argument("--data_percent", type = float, default = 1)
 
     args = parser.parse_args()
@@ -250,20 +266,24 @@ if __name__ == "__main__":
         model_choice = model_choice + "_" + str(data_percent)
 
     #EVAL MODEL
-    print("Testing")
-    test_score = predict(model, test_loader, device, model_choice)
-
-    if os.path.exists("results/supervised_results.pkl"):
-        with open(f"results/supervised_results.pkl", "rb") as f:
-            supervised_results = pickle.load(f)
-        supervised_results[model_choice] = test_score.item()
+    if args.extract_activations:
+        for split, loader in [("train", train_loader), ("val", train_loader), ("test", train_loader)]:
+            save_activations(model, loader, device, split)
     else:
-        supervised_results = {}
-        supervised_results[model_choice] = test_score.item()
-    
-    print(supervised_results)
+        print("Testing")
+        test_score = predict(model, test_loader, device, model_choice)
 
-    with open(f"results/supervised_results.pkl", "wb") as f:
-        pickle.dump(supervised_results, f)
+        if os.path.exists("results/supervised_results.pkl"):
+            with open(f"results/supervised_results.pkl", "rb") as f:
+                supervised_results = pickle.load(f)
+            supervised_results[model_choice] = test_score.item()
+        else:
+            supervised_results = {}
+            supervised_results[model_choice] = test_score.item()
+        
+        print(supervised_results)
+
+        with open(f"results/supervised_results.pkl", "wb") as f:
+            pickle.dump(supervised_results, f)
 
 
