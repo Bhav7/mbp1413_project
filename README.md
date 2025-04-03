@@ -10,4 +10,4 @@ Code for mbp1413 final project
 3) main_functions.py
   - This script has functions which are reused across other scripts
 4) results
-  - This directory stores the PSNR results for each of the models in the paper alongside the hyperparameter search results for U-net
+  - This directory stores the PSNR results for each of the supervised models in the paper alongside the hyperparameter search results for U-net
