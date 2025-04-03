@@ -106,7 +106,7 @@ def predict(model, dataloader, device, model_type, mode = "test"):
                
     return torch.mean(torch.tensor(metrics_avg))
 
-def save_activations(model, dataloader, device, split_type):
+def save_activations(model, dataloader, device, model_type, split_type):
     """
     Save model activations prior to final layers
     """
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     mlp_ratio=2, upsampler='', resi_connection='1conv'
     )
         model.load_state_dict(torch.load('SwinIR/model_zoo/004_grayDN_DFWB_s128w8_SwinIR-M_noise15.pth')['params'], strict=True)
-        if not(os.path.exists("results/last_layer_weights/swinir.pth")):
+        if not(os.path.exists("results/last_layer_weights/swinir.pth")): #save final layer weights
             torch.save(model.conv_last.state_dict(), "results/last_layer_weights/swinir.pth")
         model.to(device)
         
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     #EVAL MODEL
     if args.extract_activations:
         for split, loader in [("train", train_loader), ("val", train_loader), ("test", train_loader)]:
-            save_activations(model, loader, device, split)
+            save_activations(model, loader, device, model_choice, split)
     else:
         print("Testing")
         test_score = predict(model, test_loader, device, model_choice)
