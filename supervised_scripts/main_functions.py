@@ -39,7 +39,7 @@ def save_image(img, test_i, name, input_type = "torch"):
     if input_type == "torch":
         img = img.squeeze(0).permute(1, 2, 0).cpu().detach().numpy()
     img = img.reshape(320,320) if img.shape[2] == 1 else img
-    img = np.clip(img, 0, 1) #needed to prevent noise image from looking terrible
+    img = np.clip(img, 0, 1) #needed to represent noise appropriately
     img = (img * 255).astype(np.uint8)
     img_pil = Image.fromarray(img)
     img_pil.save(f"results/outputs/test_{test_i}_{name}.png")

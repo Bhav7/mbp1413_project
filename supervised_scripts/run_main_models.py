@@ -54,16 +54,13 @@ def train(model, dataloader, optimizer, loss_func, device):
         loss.backward()
         optimizer.step()
         loss_avg.append(loss.item())
-        # with torch.no_grad():
-        #     psnr = calc_psnr(output.cpu().detach().numpy(), denoise_y.detach().numpy())
-        #     print(psnr)
     print(torch.mean(torch.tensor(loss_avg)))
 
 
 features = {"probe":[]}
 def hook_fn(module, input, output):
     """
-    Get intermediate activations of model
+    Get intermediate activations of model, need to define a global features dict to work
     """
     features["probe"].append(output)
 
@@ -97,7 +94,6 @@ def predict(model, dataloader, device, model_type, mode = "test"):
             if model_type == "swinir":
                 output = output[..., :h_old, :w_old]
             psnr = calc_psnr(output.cpu().detach().numpy(), denoise_y.detach().numpy())
-            # print(calc_psnr(og_noise_x.cpu().detach().numpy(), denoise_y.detach().numpy()))
             metrics_avg.append(psnr)
             if mode == "test":
                save_image(output, test_i, model_type) 
@@ -161,14 +157,6 @@ if __name__ == "__main__":
     test_dataset = Create_Dataset(test_data)
     test_loader = DataLoader(test_dataset, batch_size = 1)
 
-    # for noised, denoised in test_loader:
-    #     for i in range(len(denoised)):
-    #         noised_img = noised[i].permute(1,2,0)
-    #         print(noised_img.shape)
-    #         plt.imshow(noised_img, cmap='gray')
-    #         plt.show()
-    #         break
-
 
     device = "gpu" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Using: {device}")
@@ -183,14 +171,14 @@ if __name__ == "__main__":
         if not(os.path.exists("results/last_layer_weights/swinir.pth")): #save final layer weights
             torch.save(model.conv_last.state_dict(), "results/last_layer_weights/swinir.pth")
         model.to(device)
-        
+    #if model select is unet, perform 1) hp search then 2) training     
     elif model_choice == "unet":
         epochs = 1000
         if os.path.exists("results/unet_hps.pkl"):
             with open(f"results/unet_hps.pkl", "rb") as f:
                 hyperparameter_search_performances = pickle.load(f)
         else:
-            #hp search
+            #1. hp search
             hyperparameter_search_performances = []
             search_space = {"num_res_units": [1, 2, 3], "channels": [(3, 16, 32, 64, 128), (6, 32, 64, 128, 256)]}
             for res_idx, num_res_unit in enumerate(search_space["num_res_units"]):
@@ -229,7 +217,8 @@ if __name__ == "__main__":
 
             with open(f"results/unet_hps.pkl", "wb") as f:
                 pickle.dump(hyperparameter_search_performances, f)
-
+        
+        #select hps which give highest val PSNR
         hyperparameter_search_performances.sort(key = lambda x: x[0])
         best_hps = hyperparameter_search_performances[-1]
 
