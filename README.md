@@ -9,5 +9,7 @@ Code for mbp1413 final project
   - This script is responsible for both 1) finetuning the final conv layer of SwinIR with MRI data and 2) training a randomly init conv layer with MRI data. For computational reasons, train, val, and test images were ran through SwinIR and activations prior to the final layers were saved and used as input to these models. Unfortunately, these are too large to share, but can be recreated by running ```run_main_models.py --model_type swinir --extract_activations true ```
 3) main_functions.py
   - This script has functions which are reused across other scripts
-4) results
+4) plots.ipynb
+  - Notebook with code used to generate plots for supervised portion of paper
+5) results
   - This directory stores the PSNR results for each of the supervised models in the paper alongside the hyperparameter search results for U-Net
