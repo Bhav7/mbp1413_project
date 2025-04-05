@@ -13,3 +13,14 @@ Code for mbp1413 final project
   - Notebook with code used to generate plots for supervised portion of paper
 5) results
   - This directory stores the PSNR results for each of the supervised models in the paper alongside the hyperparameter search results for U-Net
+
+
+## Zero-shot scripts
+  1) DIP/DIP.py
+   - This script trains a Deep Image Prior on all MRI PNG images present in ../test directory
+   - It will output example images at specific steps and show PSNR over time plots to "out" directory
+  2) INR/train.py
+    - This script trains a SIREN implicit neural representation on all MRI PNG images present in ../test directory
+    - will output example images as well as plots showing PSNR over time to "out" directory
+  3) NLM/NLM.py
+    - This script runs non-local means denoising algorithm on all MRI png images in ../test directory
